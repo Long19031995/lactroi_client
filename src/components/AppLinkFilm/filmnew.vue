@@ -140,7 +140,7 @@
 			getFilm: function() {
 				var self = this
 				this.Scroll.Page++
-				var url = 'http://139.59.116.17:8000/v1/api/get_list_film?' + '&page=' + this.Scroll.Page + '&count=' + this.Scroll.Count
+				var url = this.$parent.host + '/v1/api/get_list_film?' + '&page=' + this.Scroll.Page + '&count=' + this.Scroll.Count
 				this.$http.get(url).then(function (res) {
 					var i
 					for (i = 0; i < res.body.data.length; i++) {

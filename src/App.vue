@@ -52,6 +52,7 @@
 				isActiveMovies: '',
 				isActiveSeries: '',
 				category: [],
+				host: 'http://localhost:8080',
 				isShowCategory: false
 			}
 		},
@@ -73,7 +74,7 @@
 			},
 			setCategory: function () {
 				var self = this
-				var url = 'http://139.59.116.17:8000/v1/api/get_all_category/'
+				var url = this.host + '/v1/api/get_all_category/'
 				this.$http.get(url).then(function (res) {
 					self.category = res.body.data.category
 				})

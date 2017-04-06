@@ -129,7 +129,7 @@
 		methods: {
 			getFilmNewUpdates: function() {
 				var self = this
-				var url = 'http://139.59.116.17:8000/website/all/get_list_film/'
+				var url = this.$parent.host + '/website/all/get_list_film/'
 				var params = {'type_film': 41, 'page': 0, 'count': 3}
 				this.$parent.callAPI('post', url, params).then(function (res) {
 					self.Film = res.body
