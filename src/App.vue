@@ -2,16 +2,24 @@
 	<div>
 		<div id="app">
 			<div id="navbar1">
-				<div class="input-group">
-					<input type="search" placeholder="Tìm kiếm">
-					<i class="fa fa-search fa-lg"></i>	
-				</div>
-				<div class="input-group">
-					<div class="categoryName">Thể loại</div>
-					<i class="fa fa-sort-down" @click="toggleCategory()"></i>
-					<div class="categoryContent" v-show="isShowCategory">
+				<div id="search" class="input-group">
+					<input @keyup="getSearchResult()" type="search" placeholder="Tìm kiếm">
+					<i class="fa fa-search fa-lg"></i>
+					<div class="searchReview">
+						<p>Phim mới</p>
 						<ul>
-							<li v-for="item in category" v-if="item.name_category !== ''">
+							<li v-for="(item, index) in searchResult">
+								{{item.title}}
+							</li>
+						</ul>
+					</div>	
+				</div>
+				<div id="category" class="input-group">
+					<div class="categoryName">Thể loại</div>
+					<i class="fa fa-sort-down"></i>
+					<div class="categoryContent">
+						<ul>
+							<li v-for="item in category" v-if="!isUndefinedOrEmpty(item.name_category)">
 								{{item.name_category}}
 							</li>
 						</ul>
@@ -19,18 +27,16 @@
 				</div>
 			</div>
 			<div id="navbar2">
-				<div class="input-group container">
-					<ul>
-						<li @click="setActiveNewFilm()"><router-link to="/filmnew" :class="isActiveNewFilm">Phim mới</router-link></li>
-						<li @click="setActiveMovies()"><router-link to="/filmmovie" :class="isActiveMovies">Phim lẻ</router-link></li>
-						<li @click="setActiveSeries()"><router-link to="/filmseries" :class="isActiveSeries">Phim bộ</router-link></li>
-					</ul>
+				<div class="container">
+					<div class="gallery js-flickity" data-flickity-options='{ "freeScroll": true }'>
+						<div v-for="item in categoryCarousel" v-if="!isUndefinedOrEmpty(item.name_category)" class="item">
+							Phim {{item.name_category}}
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
-		<div class="scrollTop">
-			<div >
-				
+			<div id="scrollTop">
+				<i @click="scrollTop()" class="fa fa-angle-double-up fa-4x"></i>
 			</div>
 		</div>
 		<router-view></router-view>
@@ -45,42 +51,65 @@
 		name: 'app',
 		mounted: function () {
 			this.setCategory()
+			this.getSearchResult()
+			this.setJS()
 		},
 		data: function () {
 			return {
-				isActiveNewFilm: 'active',
-				isActiveMovies: '',
-				isActiveSeries: '',
 				category: [],
-				host: 'http://localhost:8080',
-				isShowCategory: false
+				categoryCarousel: [],
+				searchResult: []
 			}
 		},
 		methods: {
-			setActiveNewFilm: function () {
-				this.isActiveNewFilm = 'active',
-				this.isActiveMovies = '',
-				this.isActiveSeries = ''
-			},
-			setActiveMovies: function () {
-				this.isActiveNewFilm = '',
-				this.isActiveMovies = 'active',
-				this.isActiveSeries = ''
-			},
-			setActiveSeries: function () {
-				this.isActiveNewFilm = '',
-				this.isActiveMovies = '',
-				this.isActiveSeries = 'active'
-			},
 			setCategory: function () {
 				var self = this
-				var url = this.host + '/v1/api/get_all_category/'
+				var url = 'http://139.59.116.17:8000/v1/api/get_all_category/'
 				this.$http.get(url).then(function (res) {
 					self.category = res.body.data.category
+					var i
+					for (i = 9; i >= 0; i--) {
+						self.categoryCarousel[9 - i] = self.category[i]					
+					}
 				})
 			},
-			toggleCategory: function () {
-				this.isShowCategory = !this.isShowCategory
+			isUndefinedOrEmpty: function (value) {
+				return value === undefined || value === ''
+			},
+			getSearchResult: function () {
+				var self = this
+				var key = $('input[type="search"]').val()
+				var url = 'http://139.59.116.17:8000/v1/api/search_film?q=' + key
+				this.$http.get(url).then(function (res) {
+					self.searchResult = res.body.data
+				})
+			},
+			scrollTop: function () {
+				$('body').animate(
+					'slow',
+					{ scrollTop: 0 }
+				)
+			},
+			setJS: function () {
+				$('.searchReview').hide()
+				$('.categoryContent').hide()
+
+				$('#search').focusin(function () {
+					$('.searchReview').slideToggle()
+				})
+				$('#category').click(function () {
+					$('.categoryContent').slideToggle()
+				})
+
+				// link: http://jsfiddle.net/LCB5W/
+				$(document).mouseup(function (event) {				    
+			        if (!$('#search').is(event.target) && $('#search').has(event.target).length === 0) {
+			            $('.searchReview').hide()
+			        }
+			        if (!$('#category').is(event.target) && $('#category').has(event.target).length === 0) {
+			            $('.categoryContent').hide()
+			        }
+				})
 			}
 		}
 	}
@@ -89,6 +118,15 @@
 <style>
 	body {
 		background: #f4f4f4;
+	}
+	#scrollTop {
+		position: fixed;
+		right: 10px;
+		bottom: 10px;
+		color: #ee4b64;
+	}
+	#scrollTop:hover {
+		cursor: pointer;
 	}
 	#navbar1 {
 		background-color: white;
@@ -123,9 +161,35 @@
 	#navbar1 .input-group:nth-child(1) i:hover {
 		cursor: pointer;
 	}
+	#navbar1 .input-group:nth-child(1) .searchReview {
+		width: 443px;
+		height: 300px;
+		position: absolute;
+		top: 40px;
+		left: 0px;
+		background-color: #f4f4f4;
+		border-radius: 0px 0px 10px 10px;
+		box-shadow: 0px 2px 2px white;
+		overflow-y: auto;
+	}
+	#navbar1 .input-group:nth-child(1) .searchReview p {
+		font-size: 20px;
+		font-weight: bold;
+		padding: 5px 20px 5px 20px;
+		border-bottom: 1px solid white;
+		color: #ee4b64;
+	}
+	#navbar1 .input-group:nth-child(1) .searchReview ul li {
+		text-transform: capitalize;
+		color: #ee4b64;
+		font-size: 15px;
+	}
 	#navbar1 .input-group:nth-child(2) {
 		position: absolute;
 		right: 20px;
+	}
+	#navbar1 .input-group:nth-child(2):hover {
+		cursor: pointer;
 	}
 	#navbar1 .input-group:nth-child(2) .categoryName {
 		background-color: #f4f4f4;
@@ -142,13 +206,10 @@
 		background-color: #f4f4f4;
 		display: inline-block;
 		border: none;
-		padding: 13px 10px 12px 10px;
+		padding: 13px 10px 13px 10px;
 		margin: 5px 0px;
 		border-radius: 0px 5px 5px 0px;
 		color: #ee4b64;
-	}
-	#navbar1 .input-group:nth-child(2) i:hover {
-		cursor: pointer;
 	}
 	#navbar1 .input-group:nth-child(2) .categoryContent {
 		background-color: white;
@@ -179,28 +240,31 @@
 		width: 100%;
 		z-index: 1;
 	}
-	#navbar2 ul {
-		display: flex;
-		flex-flow: row;
-		justify-content: center;
-		list-style: none;
+	#navbar2 .gallery {
+		padding: 10px 50px;
+		width: 100%;
+	}
+	#navbar2 .gallery .item {
+		font-size: 17px;
+		width: 150px;
+		text-align: center;
+	}
+	#navbar2 .gallery .item:hover {
+		cursor: pointer;
+	}
+	#navbar2 .gallery .item.active {
+		font-size: 19px;
+		color: #ee4b64;
 		border-bottom: 2px solid #ee4b64;
 	}
-	#navbar2 ul li {
-		padding: 20px 20px 5px 20px;
-		font-size: 17px;
+	#navbar2 .gallery .flickity-prev-next-button {
+		background: transparent;
 	}
-	#navbar2 ul li a {
-		color: #aaaaaa;
-		text-decoration: none;
+	#navbar2 .gallery .flickity-prev-next-button .arrow {
+		fill: #ee4b64;
 	}
-	#navbar2 ul li:hover a {
-		cursor: pointer;
-		color: #ee4b64;
-	}
-	#navbar2 ul li a.active {
-		color: #ee4b64;
-		font-weight: bold;
+	#navbar2 .flickity-page-dots {
+		display: none;
 	}
 	footer {
 		background-color: white;

@@ -1,33 +1,12 @@
 <template>
 	<div id="index">
-    	<div id="carousel-id" class="carousel slide">
-    		<div class="carousel-inner">
-    			<div class="item active">
-					<div v-for="i in 6" v-if="FilmCarousel[i - 1] !== undefined" class="frameCarousel">
-						<div class="image">
-							<img :src="FilmCarousel[i - 1].image">
-							<p class="info">{{FilmCarousel[i - 1].length}} - {{FilmCarousel[i - 1].quality}}</p>
-							<p class="background"></p>
-							<p @click="getFilmModal(i, 'carousel1')" class="detail" data-toggle="modal" href="#modal-id">Chi tiết >></p>
-							<p class="new">new</p>
-						</div>
-					</div>
-    			</div>
-    			<div class="item">
-					<div v-for="i in 6" v-if="FilmCarousel[i + 5] !== undefined" class="frameCarousel">
-						<div class="image">
-							<img :src="FilmCarousel[i + 5].image">
-							<p class="info">{{FilmCarousel[i + 5].length}} - {{FilmCarousel[i + 5].quality}}</p>
-							<p class="background"></p>
-							<p @click="getFilmModal(i, 'carousel2')" class="detail" data-toggle="modal" href="#modal-id">Chi tiết >></p>
-							<p class="new">new</p>
-						</div>
-					</div>
-    			</div>
-    		</div>
-    		<a class="left" href="#carousel-id" data-slide="prev"><i class="fa fa-chevron-left fa-2x"></i></a>
-			<a class="right" href="#carousel-id" data-slide="next"><i class="fa fa-chevron-right fa-2x"></i></a>
-    	</div>
+		<div class="gallery js-flickity" data-flickity-options='{ "wrapAround": true }'>
+			<div v-for="(film, i) in FilmCarousel" v-if="film !== undefined" class="gallery-cell">
+				<img :src="film.image">
+				<div class="background"></div>
+				<div @click="getFilmModal(i, 'carousel')" class="detail" data-toggle="modal" href="#modal-id">Chi tiết >></div>
+			</div>
+		</div>
 	    <div class="container">
 	    	<p>- Phim mới -</p>
 	    	<div id="content">
@@ -36,6 +15,7 @@
 						<img :src="film.image">
 						<p class="info">
 							<span v-if="film.length !== null">{{film.length}} - </span>
+							<span v-if="film.status !== ''">Tập {{film.status}} - </span>
 							<span v-if="film.quality !== null">{{film.quality}}</span>
 						</p>
 						<p class="background"></p>
@@ -43,8 +23,16 @@
 						<p class="new">new</p>
 					</div>
 					<div class="nameOfFilm">
-						<p class="volume">Tập 1</p>
-						<p class="name" :title="film.title">{{film.title}}</p>
+						<p v-if="film.episodes !== null" class="volume">{{film.episodes}} Tập</p>
+						<p v-else class="volume">1 Tập</p>
+						<p v-if="film.title !== ''" :title="film.title" class="name">
+							<a :href="film.url" target="_blank">{{film.title}}</a>
+						</p>
+						<p v-else class="name">N/A</p>
+						<p class="icon">
+							<span>{{film.source}}</span>
+							<img src="http://static.hdonline.vn/template/frontend/images/favicon.ico" alt="" height="35" width="35">
+						</p>
 					</div>
 				</div>
 	    	</div>
@@ -53,12 +41,15 @@
     		<div class="modal fade" id="modal-id">
     			<div class="modal-dialog">
     				<div class="modal-content">
+    					<div class="background-blur">
+    						
+    					</div>
     					<div class="modal-header">
     						<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
     					</div>
     					<div class="modal-body">
     						<div class="row">
-    							<div class="col-md-2">
+    							<div class="col-md-3">
     								
     							</div>
     							<div class="image col-md-3">
@@ -121,11 +112,15 @@
 			this.getFilm()
 			this.loadScroll()
 		},
+		updated: function () {
+			this.getScript()
+		},
 		data: function() {
 			return {
 				Film: [],
 				FilmCarousel: [],
 				FilmModal: {},
+				UrlBackgroundFilmModal: '',
 				Scroll: {
 					Page: '',
 					Count: ''
@@ -135,30 +130,33 @@
 		methods: {
 			resetScroll: function () {
 				this.Scroll.Page = -1
-				this.Scroll.Count = 12
+				this.Scroll.Count = 10
 			},
 			getFilm: function() {
 				var self = this
 				this.Scroll.Page++
-				var url = this.$parent.host + '/v1/api/get_list_film?' + '&page=' + this.Scroll.Page + '&count=' + this.Scroll.Count
+				var url = 'http://139.59.116.17:8000/v1/api/get_list_film?' + 
+							'&page=' + this.Scroll.Page + 
+							'&count=' + this.Scroll.Count
 				this.$http.get(url).then(function (res) {
 					var i
 					for (i = 0; i < res.body.data.length; i++) {
 						self.Film.push(res.body.data[i])
 					}
-					for (i = 0; i < 12; i++) {
+					for (i = 0; i < 10; i++) {
 						self.FilmCarousel[i] = self.Film[i]
 					}
 				})
 			},
 			getFilmModal: function (i, typeShow) {
-				if (typeShow === 'carousel1') {
-					this.FilmModal = this.FilmCarousel[i - 1]
-				} else if (typeShow === 'carousel2') {
-					this.FilmModal = this.FilmCarousel[i + 5]
+				if (typeShow === 'carousel') {
+					this.FilmModal = this.FilmCarousel[i]
 				} else if (typeShow === 'newFilm') {
 					this.FilmModal = this.Film[i]
+				} else if (typeShow === 'searchResult') {
+					this.FilmCarousel === this.$parent.searchResult[i]
 				}
+				$('#detail .modal-content .background-blur').css('background-image', 'url(' + this.FilmModal.image + ')')
 			},
 			loadScroll: function () {
 				var self = this
@@ -167,77 +165,77 @@
 				    	self.getFilm()
 				    }
 				})
+			},
+			getScript: function () {
+				$.getScript('https://unpkg.com/flickity@2/dist/flickity.pkgd.min.js')
 			}
 		}
 	}
 </script>
 
 <style>
-	#index .carousel {
+	#index .gallery {
+		margin-top: 100px;
+		padding: 10px 0px;
+	  	background: #EEE;
+	}
+	#index .gallery-cell {
+	  	width: 250px;
+		height: 350px;
+		border-radius: 10px;
+	  	counter-increment: gallery-cell;
+	  	transform: scale(0.75);
+	  	z-index: 1;
+	}
+	#index .gallery-cell img {
+		width: 100%;
+		height: 100%;
 		position: relative;
+		border-radius: 10px;
 	}
-	#index .carousel .fa-chevron-left{
-		background-color: white;
-		opacity: 0.9;
+	#index .gallery-cell.is-selected {
+		transform: scale(1);
+		z-index: 2;
+	}
+	#index .gallery-cell .background {
 		position: absolute;
-		top: 220px;
-		left: 10px;
-		padding: 10px 15px 6px 10px;
-		border-radius: 50%;
-		border: 1px solid grey;
-		color: #ee4b64;
+		top: 0;
+		height: 100%;
+		width: 100%;
+		opacity: 0;
+		background-color: black;
+		transition: 0.3s ease-in-out;
+		border-radius: 10px;
 	}
-	#index .carousel .fa-chevron-right{
-		background-color: white;
-		opacity: 0.9;
-		position: absolute;
-		top: 220px;
-		right: 20px;
-		padding: 10px 10px 6px 15px;
-		border-radius: 50%;
-		border: 1px solid grey;
-		color: #ee4b64;
+	#index .gallery-cell:hover .background {
+		cursor: auto;
+		opacity: 0.5;
 	}
-	#index .frameCarousel {
-		background-color: white;
-		width: 180px;
-		height: 250px;
-		border-radius: 5px 5px 5px 5px;
-		margin: 120px 10px 0px 30px;
-		float: left;
-	}
-	#index .frameCarousel .image {
-		background-color: white;
-		width: 180px;
-		height: 250px;
-		border-radius: 5px;
-		position: relative;
-	}
-	#index .frameCarousel .image img {
-		width: 180px;
-		height: 250px;
-		border-radius: 5px;
-		position: absolute;
-		top: 0px;
-	}
-	#index .frameCarousel .image .detail {
+	#index .gallery-cell .detail {
 		background-color: #ee4b64;
 		opacity: 0;
-		width: 100px;
-		height: 30px;
-		border-radius: 5px;
+		width: 120px;
+		height: 40px;
+		border-radius: 7px;
 		text-align: center;
-		padding: 5px;
+		padding: 10px 5px;
 		position: absolute;
-		top: 120px;
-		left: 40px;
+		top: 150px;
+		left: 70px;
 		color: white;
 		font-weight: bold;
+		font-size: 15px;
 		transition: 0.3s ease-in-out;
 	}
-	#index .frameCarousel .image:hover .detail {
-		opacity: 1;
+	#index .gallery-cell:hover .detail {
 		cursor: pointer;
+		opacity: 1;
+	}
+	#index .gallery .flickity-prev-next-button .arrow {
+		fill: #ee4b64;
+	}
+	#index .flickity-page-dots {
+		display: none;
 	}
 	#index .container > p {
 		font-size: 25px;
@@ -255,9 +253,10 @@
 	#index .frame {
 		background-color: white;
 		width: 180px;
-		height: 310px;
+		height: 350px;
 		border-radius: 5px 5px 5px 5px;
 		margin: 20px 20px 20px 20px;
+		box-shadow: 0px 0px 15px #dddddd;
 	}
 	#index .frame .image {
 		background-color: white;
@@ -348,17 +347,53 @@
 		color: #ee4b64;
 	}
 	#index .frame .nameOfFilm .name {
-		text-align: center;
 		font-size: 18px;
 		white-space: nowrap;
 		overflow: hidden;
+		text-align: center;
 		text-overflow: ellipsis;
 		text-transform: capitalize;
 		color: #ee4b64;
 	}
+	#index .frame .nameOfFilm .name a {
+		text-decoration: none;
+		color: #ee4b64;
+	}
+	#index .frame .nameOfFilm .icon {
+		position: relative;
+	}
+	#index .frame .nameOfFilm .icon img {
+		border: 1px solid red;
+		margin-right: -15px;
+		border-radius: 50%;
+		position: absolute;
+		background-color: white;
+		top: -8px;
+		left: 0px;
+	}
+	#index .frame .nameOfFilm .icon span {
+		background-color: #ee4b64;
+		padding: 2px 20px 2px 20px;
+		position: absolute;
+		top: -2px;
+		left: 25px;
+		color: white;
+		border-radius: 0px 15px 15px 0px;
+	}
 	#index #detail .modal-dialog {
 		width: 80%;
-		margin-bottom: 100px;
+		margin-bottom: 200px;
+	}
+	#index #detail .modal-content .background-blur {
+		position: absolute;
+		top: 0px;
+		width: 100%;
+		height: 100%;
+		opacity: 0.5;
+		filter: blur(10px);
+		background-repeat: none;
+		background-size: cover;
+		background-position: 50% 30%;
 	}
 	#index #detail .modal-content {
 		/*background: linear-gradient(to bottom, white, #ee4b64);*/
@@ -388,18 +423,17 @@
 		box-shadow: 0px 0px 50px grey;
 	}
 	#index #detail .modal-body .content div:nth-child(1) {
-		text-align: center;
 		font-size: 30px;
 		text-transform: uppercase;
 		font-weight: bold;
+		margin-top: -20px;
 	}
 	#index #detail .modal-body .content div {
 		padding: 5px 0px;
-		text-align: center;
 	}
 	#index #detail .modal-body .content div span:nth-child(1) {
 		font-size: 18px;
-		color: grey;
+		color: #555555;
 	}
 	#index #detail .modal-body .content div span:nth-child(2) {
 		font-size: 20px;
@@ -407,11 +441,11 @@
 	}
 	#index #detail .modal-body .intro {
 		padding: 20px 100px;
-		color: #ee4b64;
+		color: black;
 		font-size: 20px;
 	}
 	#index #detail .modal-body .intro p {
 		font-size: 40px;
-		color: #ee4b64;
+		color: black;
 	}
 </style>
