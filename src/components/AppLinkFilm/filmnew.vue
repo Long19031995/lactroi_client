@@ -85,8 +85,25 @@
 										<span>Lượt xem: </span>
 										<span>{{FilmModal.view}}</span>
 									</div>
-									<div>
-										<a :href="FilmModal.url" target="_blank" class="btn btn-danger btn-lg">Xem Phim >></a>
+									<div class="buttonViewFilm">
+										<a :href="FilmModal.url" target="_blank">
+											<i class="fa fa-film btn btn-danger btn-lg"> Xem Phim</i>
+										</a>
+									</div>
+									<div class="buttonShareFacebook">
+										<a :href="getShare('facebook', FilmModal.url)" target="_blank">
+											<i class="fa fa-facebook-official fa-2x btn-danger btn"></i>
+										</a>
+									</div>
+									<div class="buttonShareTwitter">
+										<a :href="getShare('twitter', FilmModal.url)" target="_blank">
+											<i class="fa fa-twitter fa-2x btn-danger btn"></i>
+										</a>
+									</div>
+									<div class="buttonShareGoogleplus">
+										<a :href="getShare('googleplus', FilmModal.url)" target="_blank">
+											<i class="fa fa-google-plus-official fa-2x btn-danger btn"></i>
+										</a>
 									</div>
     							</div>
     						</div>
@@ -101,6 +118,13 @@
     			</div>
     		</div>
     	</div>
+    	<div id="circleLoad" class="bound">
+	      	<div class="boundpoint">
+	        	<div class="point">
+	          
+	        	</div>
+	      	</div>      
+	    </div>
 	</div>
 </template>
 
@@ -111,9 +135,10 @@
 			this.resetScroll()
 			this.getFilm()
 			this.loadScroll()
+			this.setJS()
 		},
 		updated: function () {
-			this.getScript()
+			
 		},
 		data: function() {
 			return {
@@ -146,6 +171,8 @@
 					for (i = 0; i < 10; i++) {
 						self.FilmCarousel[i] = self.Film[i]
 					}
+					self.getScript()
+					$('#circleLoad').fadeOut('slow')
 				})
 			},
 			getFilmModal: function (i, typeShow) {
@@ -158,16 +185,31 @@
 				}
 				$('#detail .modal-content .background-blur').css('background-image', 'url(' + this.FilmModal.image + ')')
 			},
+			getScript: function () {
+				$.getScript('https://unpkg.com/flickity@2/dist/flickity.pkgd.min.js')
+			},
+			getShare(typeShare, link) {
+				var href
+				if (typeShare === 'facebook') {
+					href = 'https://www.facebook.com/sharer/sharer.php?u=' + link
+				} else if (typeShare === 'twitter') {
+					href = 'https://twitter.com/share?url=' + link
+				} else if (typeShare === 'googleplus') {
+					href = 'https://plus.google.com/share?url=' + link
+				}
+				return href
+			},
 			loadScroll: function () {
 				var self = this
 				$(window).scroll(function() {
 				    if($(window).scrollTop() === $(document).height() - $(window).height()) {
+				    	$('#circleLoad').fadeIn('slow')
 				    	self.getFilm()
 				    }
 				})
 			},
-			getScript: function () {
-				$.getScript('https://unpkg.com/flickity@2/dist/flickity.pkgd.min.js')
+			setJS: function () {
+				$('#circleLoad').hide()
 			}
 		}
 	}
@@ -390,7 +432,7 @@
 		width: 100%;
 		height: 100%;
 		opacity: 0.5;
-		filter: blur(10px);
+		filter: blur(7px);
 		background-repeat: none;
 		background-size: cover;
 		background-position: 50% 30%;
@@ -439,6 +481,16 @@
 		font-size: 20px;
 		color: #ee4b64;
 	}
+	#index #detail .modal-body .content .buttonViewFilm,
+	#index #detail .modal-body .content .buttonShareFacebook,
+	#index #detail .modal-body .content .buttonShareTwitter,
+	#index #detail .modal-body .content .buttonShareGoogleplus {
+		display: inline-block;
+	}
+	#index #detail .modal-body .content .buttonViewFilm i {
+		margin-right: 20px;
+		font-size: 20px;
+	}
 	#index #detail .modal-body .intro {
 		padding: 20px 100px;
 		color: black;
@@ -448,4 +500,35 @@
 		font-size: 40px;
 		color: black;
 	}
+	.bound {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      width: 50px;
+      height: 50px;
+      background-color: #ee4b64;
+      border-radius: 50%;
+      opacity: 0.9;
+    }
+    .boundpoint {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background-color: transparent;
+      animation-name: example;
+      animation-duration: 2s;
+      animation-iteration-count: infinite;
+    }
+    .point {
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: red;
+    }
+    @keyframes example {
+      0%  {transform: rotate(360deg);}
+    }
 </style>

@@ -68,8 +68,8 @@
 				this.$http.get(url).then(function (res) {
 					self.category = res.body.data.category
 					var i
-					for (i = 9; i >= 0; i--) {
-						self.categoryCarousel[9 - i] = self.category[i]					
+					for (i = 0; i < 10; i++) {
+						self.categoryCarousel[i] = self.category[i]					
 					}
 				})
 			},
@@ -86,8 +86,8 @@
 			},
 			scrollTop: function () {
 				$('body').animate(
-					'slow',
-					{ scrollTop: 0 }
+					{ scrollTop: 0 },
+					'slow'
 				)
 			},
 			setJS: function () {
@@ -214,7 +214,7 @@
 	#navbar1 .input-group:nth-child(2) .categoryContent {
 		background-color: white;
 		width: 250px;
-		height: 400px;
+		height: 300px;
 		position: absolute;
 		box-shadow: 0px 0px 5px white;
 		right: 0px;
